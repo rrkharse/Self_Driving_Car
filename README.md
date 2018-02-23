@@ -9,10 +9,19 @@
    [Linux](https://d17h27t6h515a5.cloudfront.net/topher/2017/February/58983558_beta-simulator-linux/beta-simulator-linux.zip)  
 [Mac](https://d17h27t6h515a5.cloudfront.net/topher/2017/February/58983385_beta-simulator-mac/beta-simulator-mac.zip)  
 [Windows](https://d17h27t6h515a5.cloudfront.net/topher/2017/February/58983318_beta-simulator-windows/beta-simulator-windows.zip)  
-4. run udacity driving simulator in training mode and copy output driving_log.csv to ./data folder in same directory as this cloned repo
-5. create conda environment using .yml files
-6. run model_tf.py to train. models are output to this repo folder
-7. start udacity driving simulator and enter autonomous mode
-8. run drive_tf.py <model_name> to connect model to udacity driving simulator
-  Note: model name is xy...z.meta without ".meta"
+4. Run Udacity's driving simulator in training mode
+
+   When prompted where to store recorded data, create a folder called "data" in this cloned repo folder and save there.
+5. Create conda environment
+
+   Non-GPU users: conda env create -f environments.yml
+   GPU users: conda env create -f environment-gpu.yml
+6. Run model_tf.py to train. models are output to this repo folder
+
+   python model_tf.py -N [A model name of your choosing]
+   Run "python model_tf.py --help" for more options
+7. Start udacity driving simulator and enter autonomous mode
+8. Run drive_tf.py [model_name] to connect model to udacity driving simulator
+
+   Note: model name is xy...z.meta without ".meta"
 

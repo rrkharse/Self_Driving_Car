@@ -30,7 +30,7 @@ def parse_args():
 	parser.add_argument('-s', help='samples per epoch',     dest='samples_per_epoch', type=int,   default=2000)
 	parser.add_argument('-b', help='batch size',            dest='batch_size',        type=int,   default=40)
 	parser.add_argument('-l', help='learning rate',         dest='learning_rate',     type=float, default=1.0e-4)
-	parser.add_argument('-N', help='model name',         dest='model_name',     type=str, default='sess_tf_test_5')
+	parser.add_argument('-N', help='model name',         dest='model_name',     type=str, default='this_model_needs_a_name')
 	return parser.parse_args()
 
 
