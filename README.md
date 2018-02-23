@@ -1,5 +1,9 @@
 # Self Driving Car in TensorFlow!
 
+
+[![IMAGE ALT TEXT](https://img.youtube.com/vi/6YC5p-r-Xhg/0.jpg)](http://www.youtube.com/watch?v=6YC5p-r-Xhg "Video Tutorial")
+https://img.youtube.com/vi/6YC5p-r-Xhg/0.jpg
+
 1. Clone this repo
 2. Install Conda if not already installed (Python 3.6 version)
 
