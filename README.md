@@ -1,6 +1,7 @@
 # Self Driving Car in TensorFlow!
 
 Video tutorial link:
+
 [![IMAGE ALT TEXT](https://img.youtube.com/vi/6YC5p-r-Xhg/0.jpg)](http://www.youtube.com/watch?v=6YC5p-r-Xhg "Video Tutorial")
 https://img.youtube.com/vi/6YC5p-r-Xhg/0.jpg
 
