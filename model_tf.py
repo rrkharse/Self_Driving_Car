@@ -89,7 +89,7 @@ def train(X_train, X_valid, y_train, y_valid, args):
 
 def model_scheme(x):
 
- #	  model.add(Conv2D(24, 5, 5, activation='elu', subsample=(2, 2)))
+ #    model.add(Conv2D(24, 5, 5, activation='elu', subsample=(2, 2)))
  #    model.add(Conv2D(36, 5, 5, activation='elu', subsample=(2, 2)))
  #    model.add(Conv2D(48, 5, 5, activation='elu', subsample=(2, 2)))
  #    model.add(Conv2D(64, 3, 3, activation='elu'))
