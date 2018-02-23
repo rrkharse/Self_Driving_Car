@@ -18,7 +18,7 @@
    GPU users: conda env create -f environment-gpu.yml
 6. Run model_tf.py to train. models are output to this repo folder
 
-   python model_tf.py -N [A model name of your choosing]
+   python model_tf.py -N [A model name of your choosing]  
    Run "python model_tf.py --help" for more options
 7. Start udacity driving simulator and enter autonomous mode
 8. Run drive_tf.py [model_name] to connect model to udacity driving simulator
