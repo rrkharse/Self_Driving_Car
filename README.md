@@ -1,4 +1,4 @@
-# Self_Driving_Car
+# Self Driving Car in TensorFlow!
 
 1. Clone this repo
 2. Install Conda if not already installed (Python 3.6 version)
