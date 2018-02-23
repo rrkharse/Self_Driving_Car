@@ -14,14 +14,14 @@
    When prompted where to store recorded data, create a folder called "data" in this cloned repo folder and save there.
 5. Create conda environment
 
-   Non-GPU users: 'conda env create -f environments.yml'  
-   GPU users: 'conda env create -f environment-gpu.yml'
+   Non-GPU users: `conda env create -f environments.yml`  
+   GPU users: `conda env create -f environment-gpu.yml`
 6. Run model_tf.py to train. models are output to this repo folder
 
-   'python model_tf.py -N [A model name of your choosing]'  
-   Run 'python model_tf.py --help' for more options
-7. Start udacity driving simulator and enter autonomous mode
-8. Run 'python drive_tf.py [model_name]' to connect model to udacity driving simulator
+   `python model_tf.py -N [A model name of your choosing]`  
+   Run `python model_tf.py --help` for more options
+7. Start Udacity's driving simulator and enter autonomous mode
+8. Run `python drive_tf.py [model_name]` to connect model to Udacity's driving simulator
 
    Note: model name is xy...z.meta without ".meta"
 
