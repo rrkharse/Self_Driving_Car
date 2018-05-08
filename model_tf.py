@@ -115,7 +115,9 @@ def train(X_train, X_valid, y_train, y_valid, args):
                 
                 cost_function = tf.reduce_mean(tf.square(y_conv - y_real))
                 global_step = tf.contrib.framework.get_or_create_global_step()
-                train_step = tf.train.AdamOptimizer(1e-4).minimize(cost_function, global_step=global_step)
+                step = tf.assign_add(global_step, 1)
+                difference = tf.sqrt(cost_function)
+                train_step = tf.train.AdamOptimizer(1e-4).minimize(cost_function)
                 
                 
                 hooks=[tf.train.StopAtStepHook(last_step=args.nb_epoch*args.samples_per_epoch)]
@@ -124,16 +126,19 @@ def train(X_train, X_valid, y_train, y_valid, args):
                                            is_chief=(args.task_index == 0), checkpoint_dir="checkpoints",
                                            hooks=hooks) as sess:
                 	#sess.run(tf.global_variables_initializer())	
+                        count = 0
                         while not sess.should_stop():
                             b_sz = args.batch_size
                             X_train, y_train = shuffle(X_train,y_train,random_state=0)
                             feed_dict={x:X_train[:b_sz],y_real:y_train[:b_sz],keep_prob: args.keep_prob}
-                            sess.run(train_step, feed_dict=feed_dict)
-                            
-                            if global_step % 100 == 0:
+                            _, i = sess.run([train_step, step], feed_dict=feed_dict)
+
+                            if (int(str(i)) % 1 == 0):
                                 feed_dict={x:X_train[:b_sz],y_real:y_train[:b_sz], keep_prob: 1.0}
-                                difference = tf.sqrt(cost_function).eval(feed_dict=feed_dict)
-                                print('step %d, difference %g'%(global_step,difference))
+                                diff = sess.run(difference, feed_dict=feed_dict)
+                                print("step %d cost %f" %(i, diff) )
+                            
+                            #if i % 1 == 0:
                                 
                             #if global_step % args.samples_per_epoch == 0:
                             #    saver = tf.train.Saver() 
