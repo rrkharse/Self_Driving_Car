@@ -7,6 +7,7 @@ from sklearn.utils import shuffle
 import matplotlib.image as mpimg
 
 import tensorflow as tf
+import sys
 import pandas as pd 
 import numpy as np 
 import argparse
@@ -15,23 +16,52 @@ import os
 # helper class
 import utils_tf
 
-def main():
-	args = parse_args()
+args = None
+
+def main(_):
 	X_train, X_valid, y_train, y_valid = load_data(args)
 	train(X_train, X_valid, y_train, y_valid,args)
 
 
 def parse_args():
-	parser = argparse.ArgumentParser(description='Behavioral Cloning Training Program')
-	parser.add_argument('-d', help='data directory',        dest='data_dir',          type=str,   default='data')
-	parser.add_argument('-t', help='test size fraction',    dest='test_size',         type=float, default=0.2)
-	parser.add_argument('-k', help='drop out probability',  dest='keep_prob',         type=float, default=0.5)
-	parser.add_argument('-n', help='number of epochs',      dest='nb_epoch',          type=int,   default=100)
-	parser.add_argument('-s', help='samples per epoch',     dest='samples_per_epoch', type=int,   default=2000)
-	parser.add_argument('-b', help='batch size',            dest='batch_size',        type=int,   default=40)
-	parser.add_argument('-l', help='learning rate',         dest='learning_rate',     type=float, default=1.0e-4)
-	parser.add_argument('-N', help='model name',         dest='model_name',     type=str, default='this_model_needs_a_name')
-	return parser.parse_args()
+        parser = argparse.ArgumentParser(description='Behavioral Cloning Training Program')
+        parser.register("type", "bool", lambda v: v.lower() == "true")
+        parser.add_argument('-d', help='data directory',        dest='data_dir',          type=str,   default='data')
+        parser.add_argument('-t', help='test size fraction',    dest='test_size',         type=float, default=0.2)
+        parser.add_argument('-k', help='drop out probability',  dest='keep_prob',         type=float, default=0.5)
+        parser.add_argument('-n', help='number of epochs',      dest='nb_epoch',          type=int,   default=100)
+        parser.add_argument('-s', help='samples per epoch',     dest='samples_per_epoch', type=int,   default=2000)
+        parser.add_argument('-b', help='batch size',            dest='batch_size',        type=int,   default=40)
+        parser.add_argument('-l', help='learning rate',         dest='learning_rate',     type=float, default=1.0e-4)
+        parser.add_argument('-N', help='model name',         dest='model_name',     type=str, default='epochs/model')
+        parser.add_argument(
+            "--ps_hosts",
+            type=str,
+            default="",
+            help="Comma-separated list of hostname:port pairs"
+        )
+        parser.add_argument(
+            "--worker_hosts",
+            type=str,
+            default="",
+            help="Comma-separated list of hostname:port pairs"
+        )
+        parser.add_argument(
+            "--job_name",
+            type=str,
+            default="",
+            help="One of 'ps', 'worker'"
+        )
+        # Flags for defining the tf.train.Server
+        parser.add_argument(
+            "--task_index",
+            type=int,
+            default=0,
+            help="Index of task within the job"
+        )
+        flags, unp = parser.parse_known_args()
+        return flags, unp
+
 
 
 def load_data(args):
@@ -58,32 +88,56 @@ def load_data(args):
 
 def train(X_train, X_valid, y_train, y_valid, args):
 
-	x = tf.placeholder(tf.float32,[None,160,320,3],name="x")
-	y_real = tf.placeholder(tf.float32,[None,1])
+        ps_hosts = args.ps_hosts.split(",")
+        worker_hosts = args.worker_hosts.split(",")
 
-	y_conv, keep_prob = model_scheme(x)
+        # Create a cluster from the parameter server and worker hosts.
+        cluster = tf.train.ClusterSpec({"ps": ps_hosts, "worker": worker_hosts})
 
-	cost_function = tf.reduce_mean(tf.square(y_conv - y_real))
-	train_step = tf.train.AdamOptimizer(1e-4).minimize(cost_function)
+        # Create and start a server for the local task.
+        server = tf.train.Server(cluster,
+                           job_name=args.job_name,
+                           task_index=args.task_index)
 
-	with tf.Session() as sess:
-		sess.run(tf.global_variables_initializer())	
-		for i in range(1,args.nb_epoch * args.samples_per_epoch + 1):
-			b_sz = args.batch_size
-			X_train, y_train = shuffle(X_train,y_train,random_state=0)
-			train_step.run(feed_dict={x:X_train[:b_sz],y_real:y_train[:b_sz],keep_prob: args.keep_prob})
 
-			if i % 100 == 0:
-				feed_dict={x:X_train[:b_sz],y_real:y_train[:b_sz], keep_prob: 1.0}
-				difference = tf.sqrt(cost_function).eval(feed_dict=feed_dict)
-				print('step %d, difference %g'%(i,difference))
+        if args.job_name == "ps":
+            server.join()
+        elif args.job_name == "worker":
 
-			if i % args.samples_per_epoch == 0:
-				saver = tf.train.Saver()
-				saver.save(sess,'./{}{}'.format(args.model_name,str(i/args.samples_per_epoch)),global_step=i)
-				# feed_dict={x:X_valid[:int(len(X_valid)/2)],y_real:y_valid[:int(len(X_valid)/2)], keep_prob: 1.0}
-				# difference = tf.sqrt(cost_function).eval(feed_dict=feed_dict)
-				# print('Testing avg difference at end %g'%(difference))
+            with tf.device(tf.train.replica_device_setter(
+                worker_device="/job:worker/task:%d" % args.task_index,
+                cluster=cluster)):
+            
+                x = tf.placeholder(tf.float32,[None,160,320,3],name="x")
+                y_real = tf.placeholder(tf.float32,[None,1])
+                
+                y_conv, keep_prob = model_scheme(x)
+                
+                cost_function = tf.reduce_mean(tf.square(y_conv - y_real))
+                global_step = tf.contrib.framework.get_or_create_global_step()
+                train_step = tf.train.AdamOptimizer(1e-4).minimize(cost_function, global_step=global_step)
+                
+                
+                hooks=[tf.train.StopAtStepHook(last_step=args.nb_epoch*args.sample_per_epoch)]
+                
+                with tf.train.MonitoredTrainingSession(master=server.target,
+                                           is_chief=(args.task_index == 0), checkpoint_dir="/tmp/train_logs",
+                                           hooks=hooks) as sess:
+                	#sess.run(tf.global_variables_initializer())	
+                        while not sess.should_stop():
+                            sess.run(train_step)
+                            b_sz = args.batch_size
+                            X_train, y_train = shuffle(X_train,y_train,random_state=0)
+                            train_step.run(feed_dict={x:X_train[:b_sz],y_real:y_train[:b_sz],keep_prob: args.keep_prob})
+                            
+                            if global_step % 100 == 0:
+                                feed_dict={x:X_train[:b_sz],y_real:y_train[:b_sz], keep_prob: 1.0}
+                                difference = tf.sqrt(cost_function).eval(feed_dict=feed_dict)
+                                print('step %d, difference %g'%(global_step,difference))
+                                
+                            if global_step % args.samples_per_epoch == 0:
+                                saver = tf.train.Saver() 
+                                saver.save(sess,'./{}{}'.format(args.model_name,str(global_step/args.samples_per_epoch)),global_step=global_step)
 
 
 
@@ -162,7 +216,6 @@ def max_pool_2x2(x):
 	return tf.nn.max_pool(x,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME')	# Pools input x to downsample data
 
 
-if __name__ == '__main__':
-    main()
-
-
+if __name__ == "__main__":
+        args, unparsed = parse_args()
+        tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
