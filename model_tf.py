@@ -118,26 +118,26 @@ def train(X_train, X_valid, y_train, y_valid, args):
                 train_step = tf.train.AdamOptimizer(1e-4).minimize(cost_function, global_step=global_step)
                 
                 
-                hooks=[tf.train.StopAtStepHook(last_step=args.nb_epoch*args.sample_per_epoch)]
+                hooks=[tf.train.StopAtStepHook(last_step=args.nb_epoch*args.samples_per_epoch)]
                 
                 with tf.train.MonitoredTrainingSession(master=server.target,
-                                           is_chief=(args.task_index == 0), checkpoint_dir="/tmp/train_logs",
+                                           is_chief=(args.task_index == 0), checkpoint_dir="checkpoints",
                                            hooks=hooks) as sess:
                 	#sess.run(tf.global_variables_initializer())	
                         while not sess.should_stop():
-                            sess.run(train_step)
                             b_sz = args.batch_size
                             X_train, y_train = shuffle(X_train,y_train,random_state=0)
-                            train_step.run(feed_dict={x:X_train[:b_sz],y_real:y_train[:b_sz],keep_prob: args.keep_prob})
+                            feed_dict={x:X_train[:b_sz],y_real:y_train[:b_sz],keep_prob: args.keep_prob}
+                            sess.run(train_step, feed_dict=feed_dict)
                             
                             if global_step % 100 == 0:
                                 feed_dict={x:X_train[:b_sz],y_real:y_train[:b_sz], keep_prob: 1.0}
                                 difference = tf.sqrt(cost_function).eval(feed_dict=feed_dict)
                                 print('step %d, difference %g'%(global_step,difference))
                                 
-                            if global_step % args.samples_per_epoch == 0:
-                                saver = tf.train.Saver() 
-                                saver.save(sess,'./{}{}'.format(args.model_name,str(global_step/args.samples_per_epoch)),global_step=global_step)
+                            #if global_step % args.samples_per_epoch == 0:
+                            #    saver = tf.train.Saver() 
+                            #    saver.save(sess,'./{}{}'.format(args.model_name,str(global_step/args.samples_per_epoch)),global_step=global_step)
 
 
 
