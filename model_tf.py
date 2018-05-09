@@ -126,14 +126,13 @@ def train(X_train, X_valid, y_train, y_valid, args):
                                            is_chief=(args.task_index == 0), checkpoint_dir="checkpoints",
                                            hooks=hooks) as sess:
                 	#sess.run(tf.global_variables_initializer())	
-                        count = 0
                         while not sess.should_stop():
                             b_sz = args.batch_size
                             X_train, y_train = shuffle(X_train,y_train,random_state=0)
                             feed_dict={x:X_train[:b_sz],y_real:y_train[:b_sz],keep_prob: args.keep_prob}
                             _, i = sess.run([train_step, step], feed_dict=feed_dict)
 
-                            if (int(str(i)) % 1 == 0):
+                            if (int(str(i)) % 100 == 0):
                                 feed_dict={x:X_train[:b_sz],y_real:y_train[:b_sz], keep_prob: 1.0}
                                 diff = sess.run(difference, feed_dict=feed_dict)
                                 print("step %d cost %f" %(i, diff) )
