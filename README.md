@@ -19,8 +19,8 @@ https://img.youtube.com/vi/6YC5p-r-Xhg/0.jpg
    When prompted where to store recorded data, create a folder called "data" in this cloned repo folder and save there.
 5. Create conda environment
 
-   Non-GPU users: `conda env create -f environments.yml`  
-   GPU users: `conda env create -f environment-gpu.yml`
+   Non-GPU users: `conda env create -f cpu.yml`  
+   GPU users: `conda env create -f gpu.yml`
 6. Run model_tf.py to train. models are output to this repo folder
 
    `python model_tf.py -N [A model name of your choosing]`  
